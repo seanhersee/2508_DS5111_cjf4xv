@@ -12,7 +12,7 @@ Step #1: Virtual Machine Setup
   - add the following setup steps
      `sudo apt update`                      # To bring VM snapshot up to date with package versions
      `sudo apt install make -y`             # so we can use makefiles
-     `sudo apt install python3.12-venv -y`  # so we can create python virtual environments
+     `sudo apt install python3.14-venv -y`  # so we can create python virtual environments
      `sudo apt install tree`
   - Make it executable with `chmod +x init.sh`
   - Run it with `bash init.sh`
