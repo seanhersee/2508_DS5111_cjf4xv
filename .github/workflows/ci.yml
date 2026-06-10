@@ -30,14 +30,14 @@ jobs:
       run: |
         python --version
 
-#    - name: Install pipeline dependencies
-#      run: |
-#        make update
-#
-#    - name: Lint codebase with Pylint
-#      run: |
-#        make lint
-#
-#    - name: Execute automated test suite with Pytest
-#      run: |
-#        make test
+    - name: Install pipeline dependencies
+      run: |
+        make update
+
+    - name: Lint codebase with Pylint
+      run: |
+        make lint
+
+    - name: Execute automated test suite with Pytest
+      run: |
+        make test
