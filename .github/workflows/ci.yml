@@ -32,12 +32,12 @@ jobs:
 
     - name: Install pipeline dependencies
       run: |
-        make -C scripts/makefile update
+        make -C scripts update
 
     - name: Lint codebase with Pylint
       run: |
-        make -C scripts/makefile lint
+        make -C scripts lint
 
     - name: Execute automated test suite with Pytest
       run: |
-        make -C scripts/makefile test
+        make -C scripts test
