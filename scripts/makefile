@@ -10,5 +10,8 @@ update:  env
 lint:
 	. env/bin/activate; python -m pylint bin/clean_ids.py
 
-test:	lint
+test:   lint
 	. env/bin/activate; pytest -vv tests
+
+test_enrich:
+	@. env/bin/activate && cat mock_transcripts.jsonl | python -u bin/enrich_transcripts.py | python bin/validate_schema.py

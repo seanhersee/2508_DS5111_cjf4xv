@@ -4,3 +4,5 @@ pylint
 pytest
 youtube_transcript_api
 dotenv
+google-genai
+google
