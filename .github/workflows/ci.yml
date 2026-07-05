@@ -7,24 +7,22 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
 
-    # Define the execution matrix
+  lint:
+    name: Code Quality Inspector (Linter)
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.12']
-      # Optional: set fail-fast to false so one failing version doesn't cancel the other
-      fail-fast: false
-      
+        python-version: ['3.11', '3.12', '3.13']
+
     steps:
     - name: Check out repository code
       uses: actions/checkout@v4
 
-    - name: Set up Python runtime
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }} 
+        python-version: ${{ matrix.python-version }}
 
     - name: Check Python Version
       run: |
@@ -34,10 +32,35 @@ jobs:
       run: |
         make -C scripts update
 
-    - name: Lint codebase with Pylint
+    - name: Run Code Quality Checks
       run: |
         make -C scripts lint
 
-    - name: Execute automated test suite with Pytest
+
+  test:
+    name: Unit Testing Engine (Pytest)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Check Python Version
+      run: |
+        python --version
+
+    - name: Install pipeline dependencies
+      run: |
+        make -C scripts update
+
+    - name: Run Complete Test Engine Suite
       run: |
         make -C scripts test
