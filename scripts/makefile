@@ -1,17 +1,23 @@
 default:
 	@cat makefile
 
+ENV = env
+PYTHON = $(ENV)/bin/python3
+PIP = $(ENV)/bin/pip
+
+
+
 env:
-	python3 -m venv env; . env/bin/activate; pip install --upgrade pip
+	python3 -m venv $(ENV); $(PIP) install --upgrade pip
 
 update:  env
-	. env/bin/activate; pip install -r requirements.txt
+	$(PIP) install -r requirements.txt
 
-lint:
-	. env/bin/activate; python -m pylint bin/clean_ids.py
+lint: update
+	$(PYTHON) -m pylint bin/ lib/ tests/
 
-test:   lint
-	. env/bin/activate; pytest -vv tests
+test: lint
+	$(PYTHON) -m pytest tests/
 
-test_enrich:
-	@. env/bin/activate && cat mock_transcripts.jsonl | python -u bin/enrich_transcripts.py | python bin/validate_schema.py
+run: update
+	$(PYTHON) -u bin/enrich_transcripts.py < mock_transcripts.jsonl | $(PYTHON) bin/validate_schema.py
