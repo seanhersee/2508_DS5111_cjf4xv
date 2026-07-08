@@ -9,8 +9,8 @@ API credentials.
 import sys
 import io
 import json
-from bin.enrich_transcripts import main
 from google.genai.models import Models
+from bin.enrich_transcripts import main
 
 # 1. Build a dummy container mimicking the Gemini SDK response hierarchy
 class MockGeminiResponse: # pylint: disable=too-few-public-methods
