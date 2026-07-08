@@ -20,7 +20,7 @@ def test_extract_transcripts_main_pipeline_stream(monkeypatch, capsys):
     and outputs structured JSON Lines objects via stdout without hitting the internet.
     """
     # 1. Mock the external third-party API fetch dependency
-    def stubbed_fetch_route(self, video_id):
+    def stubbed_fetch_route():
         return MockTranscriptContainer()
     monkeypatch.setattr(YouTubeTranscriptApi, "fetch", stubbed_fetch_route)
 
@@ -38,7 +38,7 @@ def test_extract_transcripts_main_pipeline_stream(monkeypatch, capsys):
     stdout_lines = captured_output.out.strip().split("\n")
 
     # 5. Execute structural validations against the emitted JSON Lines payload contract
-    assert len(stdout_lines) == 1, "The pipeline loop should emit exactly one row per valid input ID."
+    assert len(stdout_lines) == 1, "The pipeline should emit exactly one row per valid input ID."
 
     parsed_json_line = json.loads(stdout_lines[0])
 
@@ -69,7 +69,8 @@ def test_extract_pipelien_error_handling(monkeypatch, capsys):
         pytest.fail("Main Allowed an Exception to be returned to stdout")
 
     captured_output = capsys.readouterr()
-    assert captured_output.out.strip() == "", ("Nothing should be printed to stdout when the fetch process fails")
+    assert captured_output.out.strip() == "", (
+        "Nothing should be printed to stdout when the fetch process fails")
 
 
 def test_extract_in_batch_success(monkeypatch, capsys):
@@ -78,9 +79,9 @@ def test_extract_in_batch_success(monkeypatch, capsys):
     one JSON line per ID.
     """
 
-    def stubbed_fetch_route(self, video_id):
+    def stubbed_fetch_route(video_id):
         class DynamicMockTranscript:
-            def to_raw_data(inner_self):
+            def to_raw_data(self, inner_self):
                 return [{"start": 0.0, "text": f" Transcript for {video_id}"}]
         return DynamicMockTranscript()
     monkeypatch.setattr(YouTubeTranscriptApi, "fetch", stubbed_fetch_route)

@@ -1,5 +1,4 @@
 import sys
-import os
 import platform
 import io
 import pytest
@@ -34,7 +33,7 @@ def test_all_bad_inputs(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert captured.out == ""
 
-def test_char_length(monkeypatch, capsys):
+def test_char_length():
     assert is_valid_youtube_id("kwtlyowir_") is False #10 Chars
     assert is_valid_youtube_id("kwtlyowir_t") is True #11 Chars
     assert is_valid_youtube_id("kwtlyowir_te") is False #12 Chars

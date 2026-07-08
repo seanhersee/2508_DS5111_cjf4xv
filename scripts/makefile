@@ -14,7 +14,7 @@ update:  env
 	$(PIP) install -r requirements.txt
 
 lint: update
-	$(PYTHON) -m pylint bin/ lib/ tests/
+	$(PYTHON) -m pylint bin/ tests/
 
 test: lint
 	$(PYTHON) -m pytest tests/

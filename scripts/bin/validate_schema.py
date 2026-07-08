@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Validate JSON Lines records against the enrichment pipeline's schema contract.
+
+Reads JSON objects from stdin (or a file), checks each record against the
+required/optional field rules, and reports schema violations per line.
+"""
 import sys
 import json
 
@@ -9,7 +14,7 @@ def validate_payload(line_num, payload):
     """
     required_fields = ["video_id", "cleaned_text"]
     optional_fields = ["tech_terms", "book_names"]
-    
+
     # 1. Enforce top-level dictionary data structure
     if not isinstance(payload, dict):
         print(f"❌ [Row {line_num}] Schema Failure: Record is not a valid JSON Object.")
@@ -25,7 +30,7 @@ def validate_payload(line_num, payload):
     if not isinstance(payload["video_id"], str) or not payload["video_id"].strip():
         print(f"❌ [Row {line_num}] Type Failure: 'video_id' must be a non-empty STRING.")
         return False
-        
+
     if not isinstance(payload["cleaned_text"], str):
         print(f"❌ [Row {line_num}] Type Failure: 'cleaned_text' must be a STRING.")
         return False
@@ -36,15 +41,22 @@ def validate_payload(line_num, payload):
             if not isinstance(payload[field], list):
                 print(f"❌ [Row {line_num}] Type Failure: '{field}' must be an ARRAY (Python list).")
                 return False
-            
+
             # Ensure every element inside the array is a string primitive
             if not all(isinstance(item, str) for item in payload[field]):
-                print(f"❌ [Row {line_num}] Type Failure: All elements inside '{field}' must be STRINGS.")
+                print(
+                    f"❌ [Row {line_num}] Type Failur: "
+                    "All elements inside '{field}' must be STRINGS."
+                )
                 return False
-                
+
     return True
 
 def main():
+    """
+    Control function for the script. This will run the vaildation steps
+    for the data pipeline.
+    """
     print("🚀 Starting pipeline data contract validation...")
     total_records = 0
     failed_records = 0
@@ -53,7 +65,7 @@ def main():
         line = line.strip()
         if not line:
             continue
-            
+
         total_records += 1
         try:
             data = json.loads(line)
@@ -68,10 +80,13 @@ def main():
         print("⚠️ Warning: No records were processed via stdin.")
         sys.exit(1)
     elif failed_records > 0:
-        print(f"🔴 Failure: {failed_records}/{total_records} records violated the schema contract.")
+        print(
+            f"🔴 Failure: {failed_records}/{total_records} records violated the schema contract."
+        )
         sys.exit(1)
     else:
-        print(f"🟢 Success: All {total_records} records successfully match the required data contract!")
+        print(f"🟢 Success: All {total_records} "
+            "records successfully match the required data contract!")
         sys.exit(0)
 
 if __name__ == '__main__':
