@@ -33,7 +33,7 @@ def test_extract_transcripts_main_pipeline_stream(monkeypatch, capsys):
     and outputs structured JSON Lines objects via stdout without hitting the internet.
     """
     # 1. Mock the external third-party API fetch dependency
-    def stubbed_fetch_route():
+    def stubbed_fetch_route(_self, _video_id):
         """
         Returns a Monkeypatch container to use in place of a real API call.
         """
@@ -95,7 +95,7 @@ def test_extract_in_batch_success(monkeypatch, capsys):
     one JSON line per ID.
     """
 
-    def stubbed_fetch_route(video_id):
+    def stubbed_fetch_route(_self, video_id):
         """
         Returns a mock transcript mimicing a real fetch response.
         """
