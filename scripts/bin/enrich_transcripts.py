@@ -33,6 +33,37 @@ class LLMStrategy (ABC): # pylint: disable=too-few-public-methods
         using an LLM client."""
         return
 
+class GeminiEnrichmentStrategy(LLMStrategy): # pylint: disable=too-few-public-methods
+    """Implementation of the enrichment steps using Gemini"""
+
+    def __init__(self):
+
+        api_key = os.getenv("GEMINI_API_KEY")
+
+        if not api_key:
+            logging.critical("GEMENI API Key Not Found.")
+            sys.exit(1)
+
+        try:
+            self.client = genai.Client(api_key=api_key)
+        except Exception: # pylint: disable=broad-exception-caught
+            logging.critical('Failed to initialize Gemini client')
+            sys.exit(1)
+
+        self.response_schema = types.Schema(
+            type = types.Type.OBJECT,
+            required = ['video_id', 'cleaned_text'],
+            properties ={
+                'video_id': types.Schema(type = types.Type.STRING),
+                'cleaned_text': types.Schema(type = types.Type.STRING),
+                'tech_terms': types.Schema(
+                    type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
+                'book_names': types.Schema(
+                    type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING))
+                }
+            )
+
+
 def main():
     """
     Passes a Youtube Transcript to Gemini LLM to clena the text and extract relevant
@@ -44,19 +75,13 @@ def main():
     errors are logged.
     """
 
-    logging.info("Pipeline Step 2B (Gemini Enrichment) started.")
+    logging.info("LLM Enrichment Started.")
 
-    # -------------------------------------------------------------------------
-    # API Environment Validation and Client Initialization
-    # Extract the necessary credential key token from the local environment.
-    # If the token is missing, log a critical failure and terminate the system.
-    # Otherwise, instantiate the official Google GenAI Client utility.
-    # -------------------------------------------------------------------------
-    # === YOUR CODE HERE ===
+
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
-        logging.critical("GEMENI API Key Npt Found.")
+        logging.critical("GEMENI API Key Not Found.")
         sys.exit(1)
 
     try:
@@ -65,32 +90,18 @@ def main():
         logging.critical('Failed to initialize Gemini client')
         sys.exit(1)
 
-    # ======================
-
-    # -------------------------------------------------------------------------
-    # Structured Output Response Schema Definition
-    # To prevent the LLM from returning unpredictable formats that would crash
-    # downstream applications, define a strict "Data Contract" using a JSON
-    # Schema layout.
-    #
-    # Enforce a response type of "OBJECT" that guarantees the presence of:
-    #   - video_id: (STRING, Required)
-    #   - cleaned_text: (STRING, Required)
-    #   - tech_terms: (ARRAY of STRINGS)
-    #   - book_names: (ARRAY of STRINGS)
-    # -------------------------------------------------------------------------
     response_schema = types.Schema(
-        type=types.Type.OBJECT,
-        required=["video_id", "cleaned_text"],
-        properties={
-            "video_id":     types.Schema(type=types.Type.STRING),
-            "cleaned_text": types.Schema(type=types.Type.STRING),
-            "tech_terms":   types.Schema(
+        type = types.Type.OBJECT,
+        required = ['video_id', 'cleaned_text'],
+        properties ={
+            'video_id': types.Schema(type = types.Type.STRING),
+            'cleaned_text': types.Schema(type = types.Type.STRING),
+            'tech_terms': types.Schema(
                 type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
-            "book_names":   types.Schema(
-                type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
-        }
-    )
+            'book_names': types.Schema(
+                type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING))
+            }
+        )
 
     # Stream processing framework reading line-by-line text inputs from stdin
     for line in sys.stdin:
