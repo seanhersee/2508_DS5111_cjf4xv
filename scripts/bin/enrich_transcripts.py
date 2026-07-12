@@ -8,6 +8,8 @@ import sys
 import os
 import json
 import logging
+from abc import ABC, abstractmethod
+from typing import Any
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -21,6 +23,15 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+class LLMStrategy (ABC): # pylint: disable=too-few-public-methods
+    """The contract every encirchment must satisfy"""
+
+    @abstractmethod
+    def enrich(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Transforms raw transcript inputs into validated, structured enriched data
+        using an LLM client."""
+        return
 
 def main():
     """
