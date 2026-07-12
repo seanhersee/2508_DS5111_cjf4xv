@@ -16,7 +16,7 @@ from bin.enrich_transcripts import main, TranscriptEnricher, LLMStrategy
 # 1. Build a dummy container mimicking the Gemini SDK response hierarchy
 class MockGeminiResponse: # pylint: disable=too-few-public-methods
     """
-    Placeholder for Gemeni response text.
+    Placeholder for Gemini response text.
 
     """
     def __init__(self, text_payload):

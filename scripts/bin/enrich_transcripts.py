@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Receives transcripts from upstream pileline steps and passes the contents
-through Gemini LLM to extract techinical content and book reccomendations.
+through Gemini LLM to extract technical content and book recomendations.
 """
 
 import sys
@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 
 class LLMStrategy (ABC): # pylint: disable=too-few-public-methods
-    """The contract every encirchment must satisfy"""
+    """The contract every enrichment must satisfy"""
 
     @abstractmethod
     def enrich(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -41,7 +41,7 @@ class GeminiEnrichmentStrategy(LLMStrategy): # pylint: disable=too-few-public-me
         api_key = os.getenv("GEMINI_API_KEY")
 
         if not api_key:
-            logging.critical("GEMENI API Key Not Found.")
+            logging.critical("GEMINI API Key Not Found.")
             sys.exit(1)
 
         try:
