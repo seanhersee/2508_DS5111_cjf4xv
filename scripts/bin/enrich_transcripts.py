@@ -63,6 +63,24 @@ class GeminiEnrichmentStrategy(LLMStrategy): # pylint: disable=too-few-public-me
                 }
             )
 
+    def enrich(self, payload: dict[str, Any]) -> dict[str, Any]:
+        video_id = payload['video_id']
+        raw_text = payload['raw_text']
+
+        prompt =  f"""
+        You are an elite data engineer. Clean this transcript text for video_id '{video_id}'.
+        1. Strip all timestamps and duration codes.
+        2. Extract technical architecture terms and books.
+        """
+
+        response = self.client.models.generate_content(
+            model = 'gemini-2.5-flash',
+            contents = [prompt,raw_text],
+            config = types.GenerateContentConfig(
+                response_mime_type = 'application/json',
+                response_schema = self.response_schema))
+
+        return json.loads(response.text)
 
 def main():
     """
