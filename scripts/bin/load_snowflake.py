@@ -1,3 +1,10 @@
+"""
+This script establishes a connection to the Snowflake
+DB and inserts the raw transcripts from the pipeline into
+the raw_transcripts table. If the table does not already
+exist, the table is first created.
+"""
+
 import sys
 import os
 import json
@@ -13,6 +20,14 @@ logging.basicConfig(
 )
 
 def main():
+    """
+    Executes a Snowflake DB connection to insert the transcript
+    data from the preceeding pipeline into the raw_transcripts
+    table.
+
+    If the table does not already exist, it is then created
+    before the transcript is imported.
+    """
     # Initialize the environment variables from the local .env file
     load_dotenv()
 
@@ -28,14 +43,15 @@ def main():
     sf_password = os.getenv('SF_PASSWORD')
 
     if not sf_user or not sf_password:
-        logging.critical("Missing critical Snowflake runtime credential bindings. Ingestion aborted.")
+        logging.critical(
+            "Missing critical Snowflake runtime credential bindings. Ingestion aborted.")
         sys.exit(1)
 
     try:
         # Pass the pre-extracted user/password variables along with remaining context configs
         ctx = snowflake.connector.connect(
             user=sf_user,
-            passwrod=sf_password,
+            password=sf_password,
             account=os.getenv('SF_ACCOUNT'),
             warehouse=os.getenv('SF_WAREHOUSE'),
             database=os.getenv('SF_DATABASE'),
@@ -43,8 +59,8 @@ def main():
         )
         cs = ctx.cursor()
 
-    except Exception as e:
-        logging.critical(f"Snowflake Authorization Context Handshake Failed: {str(e)}")
+    except Exception as e: # pylint: disable=broad-exception-caught
+        logging.critical("Snowflake Authorization Context Handshake Failed: %s", str(e))
         sys.exit(1)
 
     # -------------------------------------------------------------------------
@@ -61,8 +77,8 @@ def main():
             )
         """)
 
-    except Exception as e:
-        logging.error(f"Failed to execute target structural validation DDL: {str(e)}")
+    except Exception as e: # pylint: disable=broad-exception-caught
+        logging.error("Failed to execute target structural validation DDL: %s", str(e))
         cs.close()
         ctx.close()
         sys.exit(1)
@@ -95,9 +111,12 @@ def main():
             )
 
             # Left intact from your original template design:
-            logging.info(f"Loaded entry token item target: [{json_data.get('video_id', 'UNKNOWN')}] safely to warehouse.")
-        except Exception as e:
-            logging.error(f"Skipping corrupt pipeline payload stream element: {str(e)}")
+            logging.info("Loaded entry token item target: [%s] safely to warehouse.",
+                json_data.get("video_id", "UNKNOWN")
+            )
+
+        except Exception as e: # pylint: disable=broad-exception-caught
+            logging.error("Skipping corrupt pipeline payload stream element: %s", str(e))
 
     # -------------------------------------------------------------------------
     # Ensure that resource cursors and connection pools are definitively closed
