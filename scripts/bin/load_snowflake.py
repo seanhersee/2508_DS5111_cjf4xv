@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 # Establish clean centralized diagnostic logging metrics output footprint
 logging.basicConfig(
-    filename='pipeline/logs/pipeline_audit.log',
+    filename='pipeline_audit.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
@@ -55,7 +55,8 @@ def main():
             account=os.getenv('SF_ACCOUNT'),
             warehouse=os.getenv('SF_WAREHOUSE'),
             database=os.getenv('SF_DATABASE'),
-            schema=os.getenv('SF_SCHEMA')
+            schema=os.getenv('SF_SCHEMA'),
+            role=os.getenv('SF_ROLE')
         )
         cs = ctx.cursor()
 
