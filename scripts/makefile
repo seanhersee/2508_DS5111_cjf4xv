@@ -33,9 +33,9 @@ docker_build:
 
 docker_run:
 	cat $(REPO_ROOT)/scripts/youtube_ids | docker run -i \
-	  -v "$(REPO_ROOT)/scripts:/app/pipeline" \
-	  --env-file $(REPO_ROOT)/scripts/bin/.env \
-	  sdhersee/ds5111-pipeline:latest
+	 -v "$(REPO_ROOT)/scripts/logs:/app/logs" \
+	 --env-file $(REPO_ROOT)/scripts/bin/.env \
+	 sdhersee/ds5111-pipeline:latest
 
 docker_rebuild-run: docker_build docker_run
 

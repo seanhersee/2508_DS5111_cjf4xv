@@ -131,6 +131,7 @@ def main():
     # out down to the operating system runtime container layout.
     # -------------------------------------------------------------------------
 
+    ctx.commit()
     cs.close()
     ctx.close()
 
