@@ -78,7 +78,7 @@ def main():
             if validate_payload(total_records, data):
                 sys.stdout.write(line + "\n")
             else:
-               failed_records += 1
+                failed_records += 1
         except json.JSONDecodeError:
             _err(f"❌ [Row {total_records}] Syntax Failure: Line is not valid JSON Lines format.")
             failed_records += 1
