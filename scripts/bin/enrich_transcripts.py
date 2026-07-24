@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+"""
+Receives transcripts from upstream pileline steps and passes the contents
+through Gemini LLM to extract technical content and book recomendations.
+"""
+
 import sys
 import os
 import json
 import logging
+from abc import ABC, abstractmethod
+from typing import Any
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -17,104 +24,111 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def main():
-    logging.info("Pipeline Step 2B (Gemini Enrichment) started.")
-    
-    # -------------------------------------------------------------------------
-    # TODO 1: API Environment Validation and Client Initialization
-    # Extract the necessary credential key token from the local environment.
-    # If the token is missing, log a critical failure and terminate the system.
-    # Otherwise, instantiate the official Google GenAI Client utility.
-    # -------------------------------------------------------------------------
-    # === YOUR CODE HERE ===
-    api_key = os.getenv("GEMINI_API_KEY")
+class LLMStrategy (ABC): # pylint: disable=too-few-public-methods
+    """The contract every enrichment must satisfy"""
 
-    if not api_key:
-        logging.critical("GEMENI API Key Npt Found.")
-        sys.exit(1)
+    @abstractmethod
+    def enrich(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Transforms raw transcript inputs into validated, structured enriched data
+        using an LLM client."""
+        return
 
-    try:
-        client = genai.Client(api_key=api_key)
-    except Exception as e:
-        logging.critical('Failed to initialize Gemini client')
-        sys.exit(1)
+class GeminiEnrichmentStrategy(LLMStrategy): # pylint: disable=too-few-public-methods
+    """Implementation of the enrichment steps using Gemini"""
 
-    # ======================
+    def __init__(self):
 
-    # -------------------------------------------------------------------------
-    # TODO 2: Structured Output Response Schema Definition
-    # To prevent the LLM from returning unpredictable formats that would crash
-    # downstream applications, define a strict "Data Contract" using a JSON 
-    # Schema layout. 
-    # 
-    # Enforce a response type of "OBJECT" that guarantees the presence of:
-    #   - video_id: (STRING, Required)
-    #   - cleaned_text: (STRING, Required)
-    #   - tech_terms: (ARRAY of STRINGS)
-    #   - book_names: (ARRAY of STRINGS)
-    # -------------------------------------------------------------------------
-    response_schema = types.Schema(
-        type=types.Type.OBJECT,
-        required=["video_id", "cleaned_text"],
-        properties={
-            "video_id":     types.Schema(type=types.Type.STRING),
-            "cleaned_text": types.Schema(type=types.Type.STRING),
-            "tech_terms":   types.Schema(type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
-            "book_names":   types.Schema(type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
-        }
-    )
+        api_key = os.getenv("GEMINI_API_KEY")
 
-    # Stream processing framework reading line-by-line text inputs from stdin
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-            
-        # ---------------------------------------------------------------------
-        # TODO 3: Inbound String Stream Deserialization
-        # Safely wrap your stream ingestion inside an isolated try-except block.
-        # Parse the raw line string object into a key-value dictionary and 
-        # extract the target 'video_id' and 'raw_text' properties. 
-        # Log any malformed line tracks and continue processing the stream.
-        # ---------------------------------------------------------------------
+        if not api_key:
+            logging.critical("GEMINI API Key Not Found.")
+            sys.exit(1)
+
         try:
-            payload=json.loads(line)
-            video_id = payload['video_id']
-            raw_text = payload['raw_text']
-        except Exception as e:
-            logging.error(f"Failed to parse incoming JSON payload row: {str(e)}")
-            continue
+            self.client = genai.Client(api_key=api_key)
+        except Exception: # pylint: disable=broad-exception-caught
+            logging.critical('Failed to initialize Gemini client')
+            sys.exit(1)
 
-        logging.info(f"Orchestrating Gemini enrichment for video: {video_id}")
-        
-        prompt = f"""
+        self.response_schema = types.Schema(
+            type = types.Type.OBJECT,
+            required = ['video_id', 'cleaned_text'],
+            properties ={
+                'video_id': types.Schema(type = types.Type.STRING),
+                'cleaned_text': types.Schema(type = types.Type.STRING),
+                'tech_terms': types.Schema(
+                    type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING)),
+                'book_names': types.Schema(
+                    type=types.Type.ARRAY, items=types.Schema(type=types.Type.STRING))
+                }
+            )
+
+    def enrich(self, payload: dict[str, Any]) -> dict[str, Any]:
+        video_id = payload['video_id']
+        raw_text = payload['raw_text']
+
+        prompt =  f"""
         You are an elite data engineer. Clean this transcript text for video_id '{video_id}'.
         1. Strip all timestamps and duration codes.
         2. Extract technical architecture terms and books.
         """
 
-        # ---------------------------------------------------------------------
-        # TODO 4: Structured Model Invocation and Instant Stream Flushing
-        # Call the 'gemini-2.5-flash' model via the unified SDK interface.
-        # Inject the constructed prompt along with the raw text sequence payload.
-        # Map the configuration block to use the structured JSON mime-type 
-        # and enforce your defined response schema parameters.
-        # Write the resulting text explicitly to sys.stdout and flush immediately.
-        # ---------------------------------------------------------------------
-        try:
-            response = client.models.generate_content(
-                model = 'gemini-2.5-flash',
-                contents = [prompt,raw_text],
-                config = types.GenerateContentConfig(
-                    response_mime_type = 'application/json',
-                    response_schema = response_schema))
-            sys.stdout.write(response.text + '\n')
-            sys.stdout.flush()
+        response = self.client.models.generate_content(
+            model = 'gemini-2.5-flash',
+            contents = [prompt,raw_text],
+            config = types.GenerateContentConfig(
+                response_mime_type = 'application/json',
+                response_schema = self.response_schema))
 
-        except Exception as e:
-            logging.error(f"Failed processing video {video_id} during LLM generation: {str(e)}")
+        return json.loads(response.text)
 
-    logging.info("Pipeline Step 2B finished.")
+class TranscriptEnricher: # pylint: disable=too-few-public-methods
+    """Vendor-agnostic engine: streams JSONL records through an injected LLM strategy."""
+
+    def __init__(self, strategy: LLMStrategy) -> None:
+        self.strategy = strategy
+
+
+    def run(self, stream) -> None:
+        """Read JSONL records from `stream`, enrich each, write results to stdout."""
+        for line in stream:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logging.error("Failed to parse incoming JSON payload row: %s", str(e))
+                continue
+
+            video_id = payload.get('video_id', 'unknown')
+
+            try:
+                logging.info('Running Enrichment for video: %s', video_id)
+
+                enriched_result = self.strategy.enrich(payload)
+
+                sys.stdout.write(json.dumps(enriched_result) + '\n')
+                sys.stdout.flush()
+
+            except Exception as e: # pylint: disable=broad-exception-caught
+                logging.error(
+                    'Failed processing video %s during enrichment: %s',
+                    video_id,
+                    str(e))
+
+
+def main():
+    """Assemble the enrichment pipeline and run it against stdin."""
+    logging.info("LLM Enrichment Started.")
+
+    strategy = GeminiEnrichmentStrategy()
+    enricher = TranscriptEnricher(strategy)
+    enricher.run(sys.stdin)
+
+    logging.info("LLM Enrichment Complete.")
+
 
 if __name__ == '__main__':
     main()
