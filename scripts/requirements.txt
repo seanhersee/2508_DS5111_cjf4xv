@@ -6,3 +6,4 @@ youtube_transcript_api
 dotenv
 google-genai
 google
+snowflake-connector-python
