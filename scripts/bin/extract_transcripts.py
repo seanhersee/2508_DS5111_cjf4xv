@@ -22,8 +22,15 @@ from youtube_transcript_api.proxies import WebshareProxyConfig
 load_dotenv()
 
 # Direct logging statements to a shared audit log asset
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))   # .../scripts/bin
+REPO_SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)             # .../scripts
+LOG_DIR = os.path.join(REPO_SCRIPTS_DIR, 'logs')
+LOG_FILE = os.path.join(LOG_DIR, 'pipeline_audit.log')
+
+os.makedirs(LOG_DIR, exist_ok=True)
+
 logging.basicConfig(
-    filename='pipeline/logs/pipeline_audit.log',
+    filename=LOG_FILE,
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )

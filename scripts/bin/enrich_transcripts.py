@@ -15,11 +15,18 @@ from google import genai
 from google.genai import types
 
 # Load environmental configurations from local workspace files
-load_dotenv(dotenv_path="/home/ubuntu/2508_DS5111_cjf4xv/scripts/bin/.env")
+load_dotenv()
 
 # Audit logging framework tracking pipeline telemetry
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))   # .../scripts/bin
+REPO_SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)             # .../scripts
+LOG_DIR = os.path.join(REPO_SCRIPTS_DIR, 'logs')
+LOG_FILE = os.path.join(LOG_DIR, 'pipeline_audit.log')
+
+os.makedirs(LOG_DIR, exist_ok=True)
+
 logging.basicConfig(
-    filename='./pipeline_audit.log',
+    filename= LOG_FILE,
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )

@@ -7,6 +7,12 @@ required/optional field rules, and reports schema violations per line.
 import sys
 import json
 
+def _err(msg):
+    """
+    Helper function for emiting errors.
+    """
+    print(msg, file=sys.stderr)
+
 def validate_payload(line_num, payload):
     """
     Validates a single line of JSON data against the target API contract.
@@ -17,34 +23,34 @@ def validate_payload(line_num, payload):
 
     # 1. Enforce top-level dictionary data structure
     if not isinstance(payload, dict):
-        print(f"❌ [Row {line_num}] Schema Failure: Record is not a valid JSON Object.")
+        _err(f"❌ [Row {line_num}] Schema Failure: Record is not a valid JSON Object.")
         return False
 
     # 2. Enforce Required Keys Presence
     for field in required_fields:
         if field not in payload:
-            print(f"❌ [Row {line_num}] Schema Failure: Missing mandatory key '{field}'.")
+            _err(f"❌ [Row {line_num}] Schema Failure: Missing mandatory key '{field}'.")
             return False
 
     # 3. Enforce Required Value Data Types
     if not isinstance(payload["video_id"], str) or not payload["video_id"].strip():
-        print(f"❌ [Row {line_num}] Type Failure: 'video_id' must be a non-empty STRING.")
+        _err(f"❌ [Row {line_num}] Type Failure: 'video_id' must be a non-empty STRING.")
         return False
 
     if not isinstance(payload["cleaned_text"], str):
-        print(f"❌ [Row {line_num}] Type Failure: 'cleaned_text' must be a STRING.")
+        _err(f"❌ [Row {line_num}] Type Failure: 'cleaned_text' must be a STRING.")
         return False
 
     # 4. Enforce Optional Key Structure and Type Safety
     for field in optional_fields:
         if field in payload:
             if not isinstance(payload[field], list):
-                print(f"❌ [Row {line_num}] Type Failure: '{field}' must be an ARRAY (Python list).")
+                _err(f"❌ [Row {line_num}] Type Failure: '{field}' must be an ARRAY (Python list).")
                 return False
 
             # Ensure every element inside the array is a string primitive
             if not all(isinstance(item, str) for item in payload[field]):
-                print(
+                _err(
                     f"❌ [Row {line_num}] Type Failur: "
                     "All elements inside '{field}' must be STRINGS."
                 )
@@ -57,7 +63,7 @@ def main():
     Control function for the script. This will run the vaildation steps
     for the data pipeline.
     """
-    print("🚀 Starting pipeline data contract validation...")
+    _err("🚀 Starting pipeline data contract validation...")
     total_records = 0
     failed_records = 0
 
@@ -69,23 +75,25 @@ def main():
         total_records += 1
         try:
             data = json.loads(line)
-            if not validate_payload(total_records, data):
+            if validate_payload(total_records, data):
+                sys.stdout.write(line + "\n")
+            else:
                 failed_records += 1
         except json.JSONDecodeError:
-            print(f"❌ [Row {total_records}] Syntax Failure: Line is not valid JSON Lines format.")
+            _err(f"❌ [Row {total_records}] Syntax Failure: Line is not valid JSON Lines format.")
             failed_records += 1
 
-    print("\n--- Validation Summary ---")
+    _err("\n--- Validation Summary ---")
     if total_records == 0:
-        print("⚠️ Warning: No records were processed via stdin.")
+        _err("⚠️ Warning: No records were processed via stdin.")
         sys.exit(1)
     elif failed_records > 0:
-        print(
+        _err(
             f"🔴 Failure: {failed_records}/{total_records} records violated the schema contract."
         )
         sys.exit(1)
     else:
-        print(f"🟢 Success: All {total_records} "
+        _err(f"🟢 Success: All {total_records} "
             "records successfully match the required data contract!")
         sys.exit(0)
 
