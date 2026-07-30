@@ -8,5 +8,5 @@ default:
       user: "native_execution"
       role: DS5111_STUDENT_ROLE
       database: DS5111_DB
-      schema: <UVAID>  # <-- Replace with your actual computing ID
+      schema: CJF4XV  # <-- Replace with your actual computing ID
       warehouse: DS5111_WH # <-- Replace with your assigned warehouse
