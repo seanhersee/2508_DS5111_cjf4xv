@@ -6,5 +6,5 @@ SELECT
     f.value::STRING AS BOOK_NAME,
     LOADED_AT AS PROCESSED_AT
 FROM {{ ref('stg_youtube_transcripts') }}
-WHERE book_title IS NOT NULL
 LATERAL FLATTEN(input => BOOK_NAMES_ARRAY) f
+WHERE book_title IS NOT NULL

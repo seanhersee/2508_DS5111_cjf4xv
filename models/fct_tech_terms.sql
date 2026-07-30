@@ -6,5 +6,5 @@ SELECT
     f.value::STRING AS TECH_TERM,
     LOADED_AT AS PROCESSED_AT
 FROM {{ ref('stg_youtube_transcripts') }}
-WHERE tech_term IS NOT NULL
 LATERAL FLATTEN(input => TECH_TERMS_ARRAY) f
+WHERE tech_term IS NOT NULL
