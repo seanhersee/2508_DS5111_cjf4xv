@@ -5,5 +5,6 @@ SELECT
     VIDEO_ID,
     f.value::STRING AS BOOK_NAME,
     LOADED_AT AS PROCESSED_AT
-FROM {{ ref('STG_YOUTUBE_TRANSCRIPTS') }}
+FROM {{ ref('stg_youtube_transcripts') }}
+WHERE book_title IS NOT NULL
 LATERAL FLATTEN(input => BOOK_NAMES_ARRAY) f

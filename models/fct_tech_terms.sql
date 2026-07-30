@@ -5,5 +5,6 @@ SELECT
     VIDEO_ID,
     f.value::STRING AS TECH_TERM,
     LOADED_AT AS PROCESSED_AT
-FROM {{ ref('STG_YOUTUBE_TRANSCRIPTS') }}
+FROM {{ ref('stg_youtube_transcripts') }}
+WHERE tech_term IS NOT NULL
 LATERAL FLATTEN(input => TECH_TERMS_ARRAY) f
