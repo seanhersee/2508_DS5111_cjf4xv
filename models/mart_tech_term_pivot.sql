@@ -9,7 +9,7 @@ SELECT
     -- 2. Loop through the list to dynamically generate our columns
     {% for term in core_terms %}
 
-    SUM(CASE WHEN LOWER(term_name) = '{{ term }}' THEN 1 ELSE 0 END) AS count_{{ term }}_mentions
+    SUM(CASE WHEN LOWER(tech_term) = '{{ term }}' THEN 1 ELSE 0 END) AS count_{{ term }}_mentions
 
     -- 3. Add a comma if it's not the last item in the loop
     {% if not loop.last %},{% endif %}
